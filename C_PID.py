@@ -38,25 +38,29 @@ lD=0
 
 theta=5*m.pi/180
 vn=vN
+
+# Parámetros del controlador
+
 x1=0
 x2=0
 Ts=0.01 # Tiempo de muestreo
-# Parámetros del controlador
-KP=1
 
 # Parámetros de simulación
 
 T_total=7 #tiempo de simulación [s]
-t=0; # tiempo de simulación
+t=0; # Variable de simulación
 
 velocidad=[]
+throttle_position=[]
 tiempo=[]
+
 
 # ciclo de simulación
 
 while t<=T_total:
     velocidad.append(vn)
     tiempo.append(t)
+    
     e=vN-vn
     
     # Implementación del controlador
@@ -66,18 +70,34 @@ while t<=T_total:
     x1=x1n
     x2=x2n
     
+    
     # saturación
     if u>1:
         u=1
     elif u<0:
         u=0
     
+    # se van guardando las posiciones de la válvula de flujo de gasolina
+    throttle_position.append(u)
+    
     # Cálculo de la velocidad sobre el modelo linealizado
     vn1=(Ts*lA+1)*vn+Ts*lB*u-Ts*B_g*theta
     vn=vn1
     t+=Ts
-    pl.plot(tiempo,velocidad)
-    pl.grid()
+    
+    if T_total<=t:
+        pl.subplot(211)
+        pl.plot(tiempo,velocidad)
+        pl.xlabel('Tiempo [s]')
+        pl.ylabel('Velocidad [m/s]')
+        pl.grid()
+        
+        pl.subplot(212)
+        pl.plot(tiempo,throttle_position)
+        pl.xlabel('Tiempo [s]')
+        pl.ylabel(' control throttle position')
+        pl.grid()
+    
     
 pl.show()
     

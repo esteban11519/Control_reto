@@ -42,9 +42,8 @@ def V_nominal():
     global image
     image  = ImageTk.PhotoImage(img)
     x=100+(float(vnom)*4)*math.cos(float(thet)*math.pi/180)
-    y=350-(float(vnom)*4)*math.sin(float(thet)*math.pi/180)
+    y=390-(float(vnom)*4)*math.sin(float(thet)*math.pi/180)
     canvas.create_image(x,y, image = image)
-    canvas.create_line(100,350,x,y,fill='Red')
     
     
     

@@ -68,6 +68,8 @@ while t<=T_total:
     vn1=(Ts*lA+1)*vn+Ts*lB*u-Ts*B_g*theta
     vn=vn1
     t+=Ts
+    pl.xlabel('tiempo')
+    pl.ylabel('velocidad')
     pl.plot(tiempo,velocidad)
     pl.grid()
 pl.show()

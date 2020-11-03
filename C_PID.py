@@ -38,47 +38,60 @@ lD=0
 
 theta=5*m.pi/180
 vn=vN
-x1=0
-x2=0
-Ts=0.01 # Tiempo de muestreo
+
+ts=0.01 # Tiempo de muestreo
 # Parámetros del controlador
 KP=1
 
 # Parámetros de simulación
 
 T_total=7 #tiempo de simulación [s]
-t=0; # tiempo de simulación
+ # tiempo de simulación
 
 velocidad=[]
 tiempo=[]
 
 # ciclo de simulación
-
-while t<=T_total:
-    velocidad.append(vn)
-    tiempo.append(t)
-    e=vN-vn
-    
-    # Implementación del controlador
-    x1n=x1+0.009951406120761*x2+0.000101049831201*e
-    x2n=0*x1+0.990281224152192*x2+0.020209966240205*e
-    u=2.034598800407653*x1+1.914777076705006*x2+ 5.521238825269089*e + uN
-    x1=x1n
-    x2=x2n
-    
-    # saturación
-    if u>1:
-        u=1
-    elif u<0:
-        u=0
-    
-    # Cálculo de la velocidad sobre el modelo linealizado
-    vn1=(Ts*lA+1)*vn+Ts*lB*u-Ts*B_g*theta
-    vn=vn1
-    t+=Ts
-    pl.plot(tiempo,velocidad)
-    pl.grid()
-    
+class simula():
+    def __init__(self,vn,un,T_total,ts):
+        self.vn = vn
+        self.un=un
+        self.T_total =T_total
+        self.ts = ts
+        self.x1=0
+        self.x2=0
+        self.velocidad=[]
+    def sim(self):
+        t=0
+        while  t<=T_total:
+            self.velocidad.append(self.vn)
+            tiempo.append(t)
+            e=vN-self.vn
+            
+            # Implementación del controlador
+            x1n=self.x1+0.009951406120761*self.x2+0.000101049831201*e
+            x2n=0*self.x1+0.990281224152192*self.x2+0.020209966240205*e
+            u=2.034598800407653*self.x1+1.914777076705006*self.x2+ 5.521238825269089*e + uN
+            self.x1=x1n
+            self.x2=x2n
+            
+            # saturación
+            if u>1:
+                u=1
+            elif u<0:
+                u=0
+            
+            # Cálculo de la velocidad sobre el modelo linealizado
+            vn1=(self.ts*lA+1)*self.vn+self.ts*lB*u-self.ts*B_g*theta
+            self.vn=vn1
+            t+= ts
+            pl.plot(tiempo,self.velocidad)
+            pl.grid()
+            
+        
+PID= simula(vn,uN,T_total,ts)
+vell=PID.velocidad
+PID.sim()
 pl.show()
     
 

@@ -49,6 +49,7 @@ t=0; # tiempo de simulación
 
 velocidad=[] # lista de velocidades
 tiempo=[] # Lista de tiempo trascurrido
+throttle_position=[] # Lista de las posiciones de la válvula reguradora
 
 # ciclo de simulación
 
@@ -64,14 +65,27 @@ while t<=T_total:
     elif u<0:
         u=0
     
+    throttle_position.append(u)
+    
     #Cálculo de la velocidad sobre el modelo linealizado
     vn1=(Ts*lA+1)*vn+Ts*lB*u-Ts*B_g*theta
     vn=vn1
     t+=Ts
-    pl.xlabel('tiempo')
-    pl.ylabel('velocidad')
-    pl.plot(tiempo,velocidad)
-    pl.grid()
+    
+    if T_total<=t:
+        pl.subplot(211)
+        pl.plot(tiempo,velocidad)
+        pl.xlabel('Tiempo [s]')
+        pl.ylabel('Velocidad [m/s]')
+        pl.grid()
+        
+        pl.subplot(212)
+        pl.plot(tiempo,throttle_position)
+        pl.xlabel('Tiempo [s]')
+        pl.ylabel(' control throttle position')
+        pl.grid()
+    
+    
 pl.show()
     
 

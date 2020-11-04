@@ -2,13 +2,13 @@ model Cruise_control_lineal_2
   // Constantes
   parameter Real m=1600 "Neto Mass [kg]";
   parameter Real Tm=190 "Torque Máximo [Nm]";
-  parameter Real wm=400 "Velocidad angualar máxima rad/s";
+  parameter Real wm=420 "Velocidad angualar máxima rad/s";
   parameter Real beta=0.4 "Coeficiente relativo al torque";
   //parameter Real alfa_1 = 40 "Effective wheel radius 40";
   //parameter Real alfa_2 = 25 "Effective wheel radius 25";
   //parameter Real alfa_3 = 16 "Effective wheel radius 16";
-  //parameter Real alfa_4 = 12 "Effective wheel radius 12";
-  parameter Real alfa_5 = 10 "Effective wheel radius 10";
+  parameter Real alfa_4 = 12 "Effective wheel radius 12";
+  //parameter Real alfa_5 = 10 "Effective wheel radius 10";
   parameter Real Cr=0.01 "Coeficiente de fricción de rodamiento";
   parameter Real rho=1.3 "Densidad del aire kg/m^3";
   parameter Real Cd=0.32 "Coeficiente de resistencia aerodinámica dependiento de la curva";
@@ -19,9 +19,9 @@ model Cruise_control_lineal_2
   // Valores nominales
   /* vN a partir de uN
   parameter Real uN=0.1687 "Posición del acelerador nominal";
-  parameter Real a=alfa_5*uN*Tm*beta*(alfa_5/wm)^2+ rho*Cd*A/2;
-  parameter Real b=-2*(alfa_5/wm)*alfa_5*uN*Tm*beta;
-  parameter Real c=m*g*sin(theta)+m*g*Cr+(beta-1)*alfa_5*uN*Tm;
+  parameter Real a=alfa_4*uN*Tm*beta*(alfa_4/wm)^2+ rho*Cd*A/2;
+  parameter Real b=-2*(alfa_4/wm)*alfa_4*uN*Tm*beta;
+  parameter Real c=m*g*sin(theta)+m*g*Cr+(beta-1)*alfa_4*uN*Tm;
   parameter Real vN_1=-b/(2*a)+sqrt(b^2-4*a*c)/(2*a);
   parameter Real vN_2=-b/(2*a)-sqrt(b^2-4*a*c)/(2*a);
   parameter Real vN=vN_1;
@@ -31,13 +31,13 @@ model Cruise_control_lineal_2
   // uN a partir de vN
   
   parameter Real vN=20 "Velocidad nominal";
-  parameter Real T_alpha_n_v= Tm*(1-beta*(alfa_5*vN/wm-1)^2) "Función de torque";
-  parameter Real uN=(m*g*Cr+rho*Cd*A*(vN^2)/2)/(alfa_5*T_alpha_n_v);  
+  parameter Real T_alpha_n_v= Tm*(1-beta*(alfa_4*vN/wm-1)^2) "Función de torque";
+  parameter Real uN=(m*g*Cr+rho*Cd*A*(vN^2)/2)/(alfa_4*T_alpha_n_v);  
   
   
     // Linealización Jacobiana
-  parameter Real LA=(uN*(alfa_5^2)*2*Tm*beta*(alfa_5*vN/wm -1)*alfa_5/wm-rho*Cd*vN)/m;
-  parameter Real LB=alfa_5*Tm*(1-beta*(alfa_5*vN/wm -1)^2)/m;
+  parameter Real LA=(-uN*(alfa_4^2)*2*Tm*beta*(alfa_4*vN/wm -1)/wm-rho*A*Cd*vN)/m;
+  parameter Real LB=alfa_4*Tm*(1-beta*(alfa_4*vN/wm -1)^2)/m;
   parameter Real LC=1;
   parameter Real LD=0;
   
@@ -92,7 +92,7 @@ model Cruise_control_lineal_2
   uD = kp * error + I "Señal de control de desviación";
   u = uD + uN;
   
-  der(v) = (alfa_5*u*Tm*(1-beta*(alfa_5*v/wm - 1)^2)-m*g*Cr-      rho*Cd*A*(v^2)/2-m*g*sin(theta))/m;
+  der(v) = (alfa_4*u*Tm*(1-beta*(alfa_4*v/wm - 1)^2)-m*g*Cr-      rho*Cd*A*(v^2)/2-m*g*sin(theta))/m;
   y = v;
   
   /* Ecuaciones del sistema lineal con controlador */
@@ -101,6 +101,7 @@ model Cruise_control_lineal_2
   errorD = 0-yD;
   der(ID_lin) = ki * errorD;
   uD_lin= kp * errorD + ID_lin;
+  
   
   der(vD) = LA*vD+LB*uD_lin-g*theta;
   yD = vD;  

@@ -7,7 +7,7 @@ Created on Sun Oct 25 22:36:58 2020
 import math
 import tkinter as tk
 from PIL import ImageTk,Image
-import C_PID
+
 import time
 M=1600  #Neto Mass [kV_g]
 TM=190  #Torque MáxiMo [NM]

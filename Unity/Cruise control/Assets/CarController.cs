@@ -4,64 +4,77 @@ using UnityEngine;
 
 public class CarController : MonoBehaviour
 {
+    // Se crea un objeto que va a ser el carro de referencia
+    GameObject carroReferencia;
 
-    GameObject player;
-
-    public float speed=5f; 
     // Según el número de cuadros que haya establecido en X y Y, Según también esté mi ubicación del objeto.
     public float PADDING=1f;
+    
+    // Establecimiento de límites
     float MAXIMO_X=14; 
     float MINIMO_X=-14;
     float MAXIMO_Y=10; 
     float MINIMO_Y=-10;
- 
+    
+    // Datos nominales
+
+    public float vN=0;
     
     // Tiempo de muestreo
-    float sign=1;
-    float Ts=1f; // Tiempo de muestreo en segundos
-    int i;
+
+    float Ts=0.5f; // Tiempo de muestreo en segundos
     
-    // Start is called before the first frame update
+        // Datos de prueba
+        int i;
+        float sign; 
+    
+    // Tiempo primario de ejecución
+    float last_time;
+    
+    // En esta parte se inicializan los datos.
     void Start()
     {
         // Se instancia el carro de referencia
-        player= GameObject.Find("Opacity");
+        carroReferencia= GameObject.Find("Opacity");
+
+        // Se fija la posición de referencia
+        carroReferencia.transform.position=new Vector3(vN,0,0);
+        // Se registra el tiempo inicial
+        last_time=Time.time;
         i=0;
+        sign=1;
         
     }
 
-    // Update is called once per frame
+    // Actualiza los frames periódicamente
     void Update()
     {
-        float current_time=Time.time;
-        // Movimiento  horizontal con las teclas
-        // Se mueve el objeto player horizontalmente
-         float hInput= Input.GetAxis("Horizontal");
-        player.transform.position+=new Vector3(hInput*speed*Time.deltaTime,0,0);
-        
-        i++;
-        if(i%10==0){
-            sign=-sign;
-        }
-        // Movimiento vertical con las teclas
-        this.transform.position+=new Vector3(0,sign*(i%10),0);
-        
-        // Establecimiento de límites laterales
+        // Solo se ejecuta en el tiempo de muestreo
+        if(Time.time-last_time>=Ts)
+        {   
+            last_time=Time.time;
+            Debug.Log(Time.time);
+            i++;// Solo para fines de prueba y se utiliza en la función car_velocity()
+            this.transform.position=new Vector3(sign*car_velocity(),0,0);
 
-        float newX=Mathf.Clamp(transform.position.x,MINIMO_X+PADDING,MAXIMO_X-PADDING);
-        float newY=Mathf.Clamp(transform.position.y,MINIMO_Y+PADDING,MAXIMO_Y-PADDING);
-        this.transform.position=new Vector3(newX,newY,transform.position.z);
-        Debug.Log(Time.time);
-        //Print the time of when the function is first called.
-
-        /*float last_time=Time.time;
-        // No funciona
-        while ((last_time-current_time)<Ts)
-        {       last_time=Time.time;
-                Debug.Log(last_time-current_time);
         }
-        */
+
+            // Se fijan los límites de movimiento
+            float newX=Mathf.Clamp(transform.position.x,MINIMO_X+PADDING,MAXIMO_X-PADDING);
+            float newY=Mathf.Clamp(transform.position.y,MINIMO_Y+PADDING,MAXIMO_Y-PADDING);
+            this.transform.position=new Vector3(newX,newY,transform.position.z);
+        
     }
 
+    // Función que determina la velocidad
+    private float car_velocity()
+    {
+        if(i%10==0){
+            sign=-sign;
+            i=0;
+            }   
+
+        return i;
+    }
     
 }

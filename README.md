@@ -150,3 +150,8 @@ Intentándolo...
 
 ```
 
+
+Referencias
+
+Imágen tomada de: https://es.wikipedia.org/wiki/Regla_graduada#/media/Archivo:Regla_H.svg
+

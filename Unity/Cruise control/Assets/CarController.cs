@@ -22,7 +22,8 @@ public class CarController : MonoBehaviour
     
     // Tiempo de muestreo
 
-    float Ts=0.5f; // Tiempo de muestreo en segundos
+    float Ts=1f; // Tiempo de muestreo en segundos
+    float Tolerancia_Ts; // Tolerancia de tiempo de muestreo
     
         // Datos de prueba
         int i;
@@ -39,6 +40,9 @@ public class CarController : MonoBehaviour
 
         // Se fija la posición de referencia
         carroReferencia.transform.position=new Vector3(vN,0,0);
+
+        // Inicialización de variables de tiempo de muestreo
+        Tolerancia_Ts=Ts*0.05f; //Tolerancia de tiempo de muestreo del 5%
         // Se registra el tiempo inicial
         last_time=Time.time;
         i=0;
@@ -50,26 +54,24 @@ public class CarController : MonoBehaviour
     void Update()
     {
         // Solo se ejecuta en el tiempo de muestreo
-        if(Time.time-last_time>=Ts)
+        if((Time.time-last_time)>=(Ts-Tolerancia_Ts))
         {   
             last_time=Time.time;
             Debug.Log(Time.time);
             i++;// Solo para fines de prueba y se utiliza en la función car_velocity()
             this.transform.position=new Vector3(sign*car_velocity(),0,0);
-
-        }
-
             // Se fijan los límites de movimiento
             float newX=Mathf.Clamp(transform.position.x,MINIMO_X+PADDING,MAXIMO_X-PADDING);
             float newY=Mathf.Clamp(transform.position.y,MINIMO_Y+PADDING,MAXIMO_Y-PADDING);
             this.transform.position=new Vector3(newX,newY,transform.position.z);
         
+        }   
     }
 
     // Función que determina la velocidad
     private float car_velocity()
     {
-        if(i%10==0){
+        if(i%14==0){
             sign=-sign;
             i=0;
             }   

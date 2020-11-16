@@ -61,7 +61,7 @@ public class CarController : MonoBehaviour
 
     // Datos nominales
 
-    public float vN=20f; // Velocidad en m/s
+    float vN=20f; // Velocidad en m/s
     float theta_N=0f;// Ángulo Nominal
 
         // Rotación
@@ -83,22 +83,24 @@ public class CarController : MonoBehaviour
         float T_alpha_n_v; // Función de torque
         float uN; // uN Posición noMinal del Motor a partir de vN  
         
-        float B_g; // Debida a la gravedad
+        float B_g; // Debida a la gravedad y la inclinación
 
     //Linealización Jacobiana
         float T_PRIMA;
-        float lA; // A es variables de estado
-        float lB; // B es variables de estado
-        float lC;    // C es variables de estado
-        float lD;    // D es variables de estado
+        float lA; // A en variables de estado
+        float lB; // B en variables de estado
+        float lC;    // C en variables de estado
+        float lD;    // D en variables de estado
 
 
     // Variables de estado
 
-        float vn; 
+        float vn;
+        float carVelocity;
+        float vr; 
         float x1;
         float x2;
-    // Variables de car_velocity
+   
         float e;
         float x1n;
         float x2n;
@@ -109,12 +111,17 @@ public class CarController : MonoBehaviour
 
     // En esta parte se inicializan los datos.
     void Start()
-    {
+    {   
+        // Velocidad de referencia
+        vr=vN+3; // Una variación de 3 m/s en la velocidad
+        carVelocity=vN;
+
+
         // Se instancia el carro de referencia y el ground
         carroReferencia= GameObject.Find("Opacity");
         ground= GameObject.Find("ground");
         // Se fija la posición de referencia
-        carroReferencia.transform.position=new Vector3((6f*vN*3.6f/25f -12f),0,carroReferencia.transform.position.z);
+        carroReferencia.transform.position=new Vector3((6f*vr*3.6f/25f -12f),0,carroReferencia.transform.position.z);
 
         // Inicialización de variables de tiempo de muestreo
         Tolerancia_Ts=Ts*0.05f; //Tolerancia de tiempo de muestreo del 5%
@@ -135,14 +142,13 @@ public class CarController : MonoBehaviour
         lC=1f;    // C es variables de estado
         lD=0f;    // D es variables de estado
 
-        // Variables de estado
+        // Variables de estado del controlador
 
-        vn=0; // Hice el controlador con esta respuesta al impulso 
+        vn=0f; // El controlador se diseñó con un cambio al escalón de magnitud 3. 
         x1=0f;
         x2=0f;
 
-        
-    }
+         }
 
     // Actualiza los frames periódicamente
     void Update()
@@ -154,38 +160,38 @@ public class CarController : MonoBehaviour
         {   
             last_time=Time.time;
             // tiempo de ejecución
-            Debug.Log(e);
             // Acción controladora
 
-                e=vN-vn;
+                e=vr-carVelocity;
                 
                 // Implementación del controlador
                 x1n=x1 +0.197844221975159f*x2+0.005038243521050f*e;
                 x2n=0.978442219751588f*x2+0.050382435210502f*e;
 
-                u=0.051586824663966f*x1+0.315114588675131f*x2+ 0.319823269597134f*e + uN;
-
-                x1=x1n;
-                x2=x2n;
+                u=0.051586824663966f*x1+0.315114588675131f*x2+ 0.319823269597134f*e;
+                
+                
 
                 // saturación
-                if (u>1)
+                if (u>1-uN)
                 {
-                u=1;
+                u=1-uN;
                 }
-                else if(u<0);
+                else if(u<-uN)
                 {
-                        u=0;
+                u=-uN;
                 }              
 
                 // Cálculo de la velocidad sobre el modelo linealizado
                 vn1=(Ts*lA+1)*vn+Ts*lB*u-Ts*B_g*auxTheta;
-                vn=vn1;
+                
+                carVelocity=lC*vn+lD*u+vN;
 
-            // Termina acción controladora. vn está en [m/s]
+                Debug.Log("La velocidad del carro es: "+carVelocity +", La posición de la válvula es: "+ (u+uN)); 
+            // Termina acción controladora. vn está en [m/s] y la posición está en km/h
 
-            this.transform.position=new Vector3(Mathf.Cos(auxTheta*Mathf.PI/180)*(108*vn/125-12)
-            ,Mathf.Sin(auxTheta*Mathf.PI/180)*(108*vn/125-12),transform.position.z);
+            this.transform.position=new Vector3(Mathf.Cos(auxTheta*Mathf.PI/180)*(108*carVelocity/125-12)
+            ,Mathf.Sin(auxTheta*Mathf.PI/180)*(108*carVelocity/125-12),transform.position.z);
             // Se fijan los límites de movimiento
             float newX=Mathf.Clamp(transform.position.x,MINIMO_X+PADDING,MAXIMO_X-PADDING);
             float newY=Mathf.Clamp(transform.position.y,MINIMO_Y+PADDING,MAXIMO_Y-PADDING);
@@ -203,11 +209,19 @@ public class CarController : MonoBehaviour
                 */  
                 ground.transform.Rotate(new Vector3(0,0,auxTheta));
                 // Se adapta la posición del carrito de referencia, según el ángulo y la velocidad donde vN está en km/h.
-                carroReferencia.transform.position=new Vector3(Mathf.Cos(auxTheta*Mathf.PI/180)*(6*vN/25-12)
-                ,Mathf.Sin(auxTheta*Mathf.PI/180)*(6*vN/25-12),carroReferencia.transform.position.z);
+                carroReferencia.transform.position=new Vector3(Mathf.Cos(auxTheta*Mathf.PI/180)*(6*vr/25-12)
+                ,Mathf.Sin(auxTheta*Mathf.PI/180)*(6*vr/25-12),carroReferencia.transform.position.z);
                 // Solo se hace la rotación una vez
                 rotate=false;
             }
+
+            //actualización de variables
+
+
+            vn=vn1;
+            x1=x1n;
+            x2=x2n;
+
         
         
         }   

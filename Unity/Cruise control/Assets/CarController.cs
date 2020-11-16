@@ -43,9 +43,27 @@ public class CarController : MonoBehaviour
     float MAXIMO_Y=10; 
     float MINIMO_Y=-10;
     
+
+    // Constantes
+
+    float M=1600f;  //Neto Mass [kV_g]
+    float TM=190f;  //Torque MáxiMo [NM]
+    float WM=420f;  //Velocidad anV_gualar MáxiMa rad/s
+    float BETA=0.4f; //Coeficiente relativo al torque
+    float ALFHA_4 = 12f; //Effective wheel radius 10
+    float CR=0.01f; //Coeficiente de fricción de rodaMiento
+    float RHO=1.3f; //Densidad del aire kV_g/M^3
+    float CD=0.32f;  // Coeficiente de resistencia aerodináMica dependiento de la curva
+    float A=2.4f;  // Área Frontal del carro [M^2]
+    float V_g=9.8f;  //V_gravedad 9.8 M/s^2 
+
+
+
     // Datos nominales
 
-    public float vN=30f; // Velocidad en km/h
+    public float vN=20f; // Velocidad en m/s
+    float theta_N=0f;// Ángulo Nominal
+
         // Rotación
         public float theta=0f; // Ángulo de rotación en grados.
         float auxTheta=0f;
@@ -53,15 +71,42 @@ public class CarController : MonoBehaviour
 
     // Tiempo de muestreo
 
-    float Ts=1f; // Tiempo de muestreo en segundos
+    float Ts=0.2f; // Tiempo de muestreo en segundos
     float Tolerancia_Ts; // Tolerancia de tiempo de muestreo
     
-        // Datos de prueba
-        int i;
-
     // Tiempo primario de ejecución
     float last_time;
     
+
+    // Datos nominales
+        // uN a partir de vN
+        float T_alpha_n_v; // Función de torque
+        float uN; // uN Posición noMinal del Motor a partir de vN  
+        
+        float B_g; // Debida a la gravedad
+
+    //Linealización Jacobiana
+        float T_PRIMA;
+        float lA; // A es variables de estado
+        float lB; // B es variables de estado
+        float lC;    // C es variables de estado
+        float lD;    // D es variables de estado
+
+
+    // Variables de estado
+
+        float vn; 
+        float x1;
+        float x2;
+    // Variables de car_velocity
+        float e;
+        float x1n;
+        float x2n;
+        float u;
+        float vn1;
+
+
+
     // En esta parte se inicializan los datos.
     void Start()
     {
@@ -69,13 +114,33 @@ public class CarController : MonoBehaviour
         carroReferencia= GameObject.Find("Opacity");
         ground= GameObject.Find("ground");
         // Se fija la posición de referencia
-        carroReferencia.transform.position=new Vector3((6f*vN/25f -12f),0,carroReferencia.transform.position.z);
+        carroReferencia.transform.position=new Vector3((6f*vN*3.6f/25f -12f),0,carroReferencia.transform.position.z);
 
         // Inicialización de variables de tiempo de muestreo
         Tolerancia_Ts=Ts*0.05f; //Tolerancia de tiempo de muestreo del 5%
         // Se registra el tiempo inicial
         last_time=Time.time;
-        i=0;
+
+        // Datos nominales
+        // uN a partir de vN
+        T_alpha_n_v= TM*(1-BETA*Mathf.Pow(ALFHA_4*vN/WM-1,2)); // Función de torque
+        uN=(M*V_g*CR+RHO*CD*A*(Mathf.Pow(vN,2))/2)/( ALFHA_4*T_alpha_n_v); // uN Posición noMinal del Motor a partir de vN  
+        
+        B_g=V_g*Mathf.Cos(theta_N*Mathf.PI/180); // Debida a la gravedad
+
+        //Linealización Jacobiana
+        T_PRIMA=-2*TM*BETA*( ALFHA_4*vN/WM -1)* ALFHA_4/WM;
+        lA=(uN* ALFHA_4*T_PRIMA-RHO*CD*vN*A)/M; // A es variables de estado
+        lB= ALFHA_4*TM*(1-BETA*Mathf.Pow(ALFHA_4*vN/WM-1,2))/M; // B es variables de estado
+        lC=1f;    // C es variables de estado
+        lD=0f;    // D es variables de estado
+
+        // Variables de estado
+
+        vn=0; // Hice el controlador con esta respuesta al impulso 
+        x1=0f;
+        x2=0f;
+
         
     }
 
@@ -89,13 +154,38 @@ public class CarController : MonoBehaviour
         {   
             last_time=Time.time;
             // tiempo de ejecución
-            Debug.Log(Time.time);
-            i++;// Solo para fines de prueba y se utiliza en la función car_velocity()
-            /*  
-                car_velocity() está en [m/s]. Vector3() tiene tres argumentos: Vector3(posx,posy,posz).
-            */
-            this.transform.position=new Vector3(Mathf.Cos(auxTheta*Mathf.PI/180)*(108*car_velocity()/125-12)
-            ,Mathf.Sin(auxTheta*Mathf.PI/180)*(108*car_velocity()/125-12),transform.position.z);
+            Debug.Log(e);
+            // Acción controladora
+
+                e=vN-vn;
+                
+                // Implementación del controlador
+                x1n=x1 +0.197844221975159f*x2+0.005038243521050f*e;
+                x2n=0.978442219751588f*x2+0.050382435210502f*e;
+
+                u=0.051586824663966f*x1+0.315114588675131f*x2+ 0.319823269597134f*e + uN;
+
+                x1=x1n;
+                x2=x2n;
+
+                // saturación
+                if (u>1)
+                {
+                u=1;
+                }
+                else if(u<0);
+                {
+                        u=0;
+                }              
+
+                // Cálculo de la velocidad sobre el modelo linealizado
+                vn1=(Ts*lA+1)*vn+Ts*lB*u-Ts*B_g*auxTheta;
+                vn=vn1;
+
+            // Termina acción controladora. vn está en [m/s]
+
+            this.transform.position=new Vector3(Mathf.Cos(auxTheta*Mathf.PI/180)*(108*vn/125-12)
+            ,Mathf.Sin(auxTheta*Mathf.PI/180)*(108*vn/125-12),transform.position.z);
             // Se fijan los límites de movimiento
             float newX=Mathf.Clamp(transform.position.x,MINIMO_X+PADDING,MAXIMO_X-PADDING);
             float newY=Mathf.Clamp(transform.position.y,MINIMO_Y+PADDING,MAXIMO_Y-PADDING);
@@ -121,16 +211,6 @@ public class CarController : MonoBehaviour
         
         
         }   
-    }
-
-    // Función que determina la velocidad (Colocar en m/s)
-    private float car_velocity()
-    {
-        if(i%11==0){
-            i=0;
-            }   
-
-        return (float)i*10f/3.6f;
     }
     
 }

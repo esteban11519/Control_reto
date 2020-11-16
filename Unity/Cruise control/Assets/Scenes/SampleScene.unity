@@ -360,9 +360,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   PADDING: 1
-  vN: 30
-  theta: 10
-  rotate: 1
+  vN: 20
+  theta: 0
+  rotate: 0
 --- !u!212 &857078941
 SpriteRenderer:
   m_ObjectHideFlags: 0

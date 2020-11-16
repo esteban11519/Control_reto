@@ -17,7 +17,7 @@ g=9.8 ; %gravedad 9.8 m/s^2
   % Valores nominales
   % uN a partir de vN
   
-  vN=16.7 ; %Velocidad nominal [m/s]
+  vN=20 ; %Velocidad nominal [m/s]
   T_alpha_n_v= Tm*(1-beta*(alfa_5*vN/wm-1)^2); % Función de torque
   uN=(m*g*Cr+rho*Cd*A*(vN^2)/2)/(alfa_5*T_alpha_n_v); % uN Posición nominal del motor a partir de vN  
   theta_N=0;

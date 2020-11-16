@@ -360,8 +360,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   PADDING: 1
-  theta: 0
-  rotate: 0
+  tiempoComienzoPendiente: 25
+  theta: 5
+  rotate: 1
 --- !u!212 &857078941
 SpriteRenderer:
   m_ObjectHideFlags: 0

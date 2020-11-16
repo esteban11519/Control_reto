@@ -65,18 +65,19 @@ public class CarController : MonoBehaviour
     float theta_N=0f;// Ángulo Nominal
 
         // Rotación
-        public float theta=0f; // Ángulo de rotación en grados.
+        public float tiempoComienzoPendiente=25f; // Tiempo en el que la pendiente comienza [s] (Se aconseja que sea mayor o igual al de establecimiento) 
+        public float theta=5f; // Ángulo de la pendiente en grados.
         float auxTheta=0f;
         public bool rotate=false;
 
-    // Tiempo de muestreo
-
+    // Tiempos
+    float t;
     float Ts=0.2f; // Tiempo de muestreo en segundos
     float Tolerancia_Ts; // Tolerancia de tiempo de muestreo
     
     // Tiempo primario de ejecución
     float last_time;
-    
+    float start_time;
 
     // Datos nominales
         // uN a partir de vN
@@ -112,6 +113,9 @@ public class CarController : MonoBehaviour
     // En esta parte se inicializan los datos.
     void Start()
     {   
+          // Se registra el tiempo inicial
+        
+
         // Velocidad de referencia
         vr=vN+3; // Una variación de 3 m/s en la velocidad
         carVelocity=vN;
@@ -125,9 +129,7 @@ public class CarController : MonoBehaviour
 
         // Inicialización de variables de tiempo de muestreo
         Tolerancia_Ts=Ts*0.05f; //Tolerancia de tiempo de muestreo del 5%
-        // Se registra el tiempo inicial
-        last_time=Time.time;
-
+      
         // Datos nominales
         // uN a partir de vN
         T_alpha_n_v= TM*(1-BETA*Mathf.Pow(ALFHA_4*vN/WM-1,2)); // Función de torque
@@ -147,7 +149,8 @@ public class CarController : MonoBehaviour
         vn=0f; // El controlador se diseñó con un cambio al escalón de magnitud 3. 
         x1=0f;
         x2=0f;
-
+        last_time=Time.time;
+        start_time=Time.time;
          }
 
     // Actualiza los frames periódicamente
@@ -162,6 +165,7 @@ public class CarController : MonoBehaviour
             // tiempo de ejecución
             // Acción controladora
 
+                // en [m/s]
                 e=vr-carVelocity;
                 
                 // Implementación del controlador
@@ -183,11 +187,11 @@ public class CarController : MonoBehaviour
                 }              
 
                 // Cálculo de la velocidad sobre el modelo linealizado
-                vn1=(Ts*lA+1)*vn+Ts*lB*u-Ts*B_g*auxTheta;
+                vn1=(Ts*lA+1)*vn+Ts*lB*u-Ts*B_g*auxTheta*Mathf.PI/180f;
                 
                 carVelocity=lC*vn+lD*u+vN;
 
-                Debug.Log("La velocidad del carro es: "+carVelocity +", La posición de la válvula es: "+ (u+uN)); 
+                Debug.Log("t= "+(Time.time-start_time)+"[s] "+" v: "+carVelocity +" [m/s] "+"u: "+ (u+uN)); 
             // Termina acción controladora. vn está en [m/s] y la posición está en km/h
 
             this.transform.position=new Vector3(Mathf.Cos(auxTheta*Mathf.PI/180)*(108*carVelocity/125-12)
@@ -200,7 +204,7 @@ public class CarController : MonoBehaviour
             
 
             // Se establece el ángulo de rotación
-            if(rotate)
+            if((Time.time-start_time>=tiempoComienzoPendiente)&&rotate)
             {
                 auxTheta=theta;
                 /* 
@@ -209,8 +213,8 @@ public class CarController : MonoBehaviour
                 */  
                 ground.transform.Rotate(new Vector3(0,0,auxTheta));
                 // Se adapta la posición del carrito de referencia, según el ángulo y la velocidad donde vN está en km/h.
-                carroReferencia.transform.position=new Vector3(Mathf.Cos(auxTheta*Mathf.PI/180)*(6*vr/25-12)
-                ,Mathf.Sin(auxTheta*Mathf.PI/180)*(6*vr/25-12),carroReferencia.transform.position.z);
+                carroReferencia.transform.position=new Vector3(Mathf.Cos(auxTheta*Mathf.PI/180f)*(6f*3.6f*vr/25f-12f)
+                ,Mathf.Sin(auxTheta*Mathf.PI/180f)*(6*3.6f*vr/25f-12f),carroReferencia.transform.position.z);
                 // Solo se hace la rotación una vez
                 rotate=false;
             }

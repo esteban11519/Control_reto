@@ -24,6 +24,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
 public class CarController : MonoBehaviour
 {
     // Objetos 
@@ -61,7 +62,7 @@ public class CarController : MonoBehaviour
 
     // Datos nominales
 
-    float vN=20f; // Velocidad en m/s
+    public float vN=20f; // Velocidad en m/s
     float theta_N=0f;// Ángulo Nominal
 
         // Rotación

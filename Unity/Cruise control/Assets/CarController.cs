@@ -23,6 +23,7 @@ Hay cosas que solo se pueden hacer con la ayuda de Dios y esta no es la excepci�
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 
 public class CarController : MonoBehaviour
@@ -32,9 +33,17 @@ public class CarController : MonoBehaviour
         GameObject carroReferencia;
         // El piso.
         GameObject ground;
+        // Velocity
+        TextMeshProUGUI Velocity;
+        TextMeshProUGUI Tiempo;
+        TextMeshProUGUI VelU;
 
+        // Audio
+
+        AudioSource throttle;
+        AudioSource arranque;
     // El margen
-    public float PADDING=1f;
+    float PADDING=1f;
     
     /* 
     Establecimiento de límites, posición está dado por cuadros en la interfaz de Unity, no por pixeles.
@@ -47,11 +56,11 @@ public class CarController : MonoBehaviour
 
     // Constantes
 
-    float M=1600f;  //Neto Mass [kV_g]
+    public float M=1600f;  //Neto Mass [kV_g]
     float TM=190f;  //Torque MáxiMo [NM]
     float WM=420f;  //Velocidad anV_gualar MáxiMa rad/s
     float BETA=0.4f; //Coeficiente relativo al torque
-    float ALFHA_4 = 12f; //Effective wheel radius 10
+    float ALFHA_4= 12f; //Effective wheel radius 10
     float CR=0.01f; //Coeficiente de fricción de rodaMiento
     float RHO=1.3f; //Densidad del aire kV_g/M^3
     float CD=0.32f;  // Coeficiente de resistencia aerodináMica dependiento de la curva
@@ -62,14 +71,14 @@ public class CarController : MonoBehaviour
 
     // Datos nominales
 
-    public float vN=20f; // Velocidad en m/s
+    float vN; // Velocidad en m/s
     float theta_N=0f;// Ángulo Nominal
 
         // Rotación
         public float tiempoComienzoPendiente=25f; // Tiempo en el que la pendiente comienza [s] (Se aconseja que sea mayor o igual al de establecimiento) 
         public float theta=5f; // Ángulo de la pendiente en grados.
         float auxTheta=0f;
-        public bool rotate=false;
+        bool rotate=true;
 
     // Tiempos
     float t;
@@ -98,8 +107,6 @@ public class CarController : MonoBehaviour
     // Variables de estado
 
         float vn;
-        float carVelocity;
-        float vr; 
         float x1;
         float x2;
    
@@ -109,6 +116,14 @@ public class CarController : MonoBehaviour
         float u;
         float vn1;
 
+    // Velocidad del carrito
+
+        public float aux_vr=50f; // Velocidad del carro en [km/h]
+        float carVelocity; // Velocidad del carro en [m/s]
+        float vr;           // Velocidad de referencia en [m/s]
+        public float step=10f; // Variación del punto nominal [km/h]
+        public float tiempoStep=100f; // Tiempo en el que se aplica el Step [s]
+        bool doStep=true;
 
 
     // En esta parte se inicializan los datos.
@@ -116,15 +131,27 @@ public class CarController : MonoBehaviour
     {   
           // Se registra el tiempo inicial
         
-
+        vN=aux_vr/3.6f; // Se calcula el punto de operación 3 m/s por debajo de la velocidad de referencia
         // Velocidad de referencia
-        vr=vN+3; // Una variación de 3 m/s en la velocidad
-        carVelocity=vN;
+        vr=vN; // Una variación de 3 m/s en la velocidad
+        carVelocity=0;
+        
 
-
-        // Se instancia el carro de referencia y el ground
+        // Se instancia el carro de referencia, el ground y los objetos de Canvas
         carroReferencia= GameObject.Find("Opacity");
         ground= GameObject.Find("ground");
+        
+        Velocity=GameObject.Find("Velocity").GetComponent<TextMeshProUGUI>();
+        Tiempo=GameObject.Find("Tiempo").GetComponent<TextMeshProUGUI>();
+        VelU=GameObject.Find("VelU").GetComponent<TextMeshProUGUI>();
+        
+        throttle=GameObject.Find("throttle").GetComponent<AudioSource>();
+        arranque=GameObject.Find("arranque").GetComponent<AudioSource>();
+        
+        throttle.Play();
+        arranque.Play();
+        arranque.volume=0.5f;
+
         // Se fija la posición de referencia
         carroReferencia.transform.position=new Vector3((6f*vr*3.6f/25f -12f),0,carroReferencia.transform.position.z);
 
@@ -134,6 +161,7 @@ public class CarController : MonoBehaviour
         // Datos nominales
         // uN a partir de vN
         T_alpha_n_v= TM*(1-BETA*Mathf.Pow(ALFHA_4*vN/WM-1,2)); // Función de torque
+        
         uN=(M*V_g*CR+RHO*CD*A*(Mathf.Pow(vN,2))/2)/( ALFHA_4*T_alpha_n_v); // uN Posición noMinal del Motor a partir de vN  
         
         B_g=V_g*Mathf.Cos(theta_N*Mathf.PI/180); // Debida a la gravedad
@@ -142,12 +170,10 @@ public class CarController : MonoBehaviour
         T_PRIMA=-2*TM*BETA*( ALFHA_4*vN/WM -1)* ALFHA_4/WM;
         lA=(uN* ALFHA_4*T_PRIMA-RHO*CD*vN*A)/M; // A es variables de estado
         lB= ALFHA_4*TM*(1-BETA*Mathf.Pow(ALFHA_4*vN/WM-1,2))/M; // B es variables de estado
-        lC=1f;    // C es variables de estado
-        lD=0f;    // D es variables de estado
-
+        
         // Variables de estado del controlador
 
-        vn=0f; // El controlador se diseñó con un cambio al escalón de magnitud 3. 
+        vn=vN; // El controlador se diseñó con un cambio al escalón de magnitud 3. 
         x1=0f;
         x2=0f;
         last_time=Time.time;
@@ -164,6 +190,7 @@ public class CarController : MonoBehaviour
         {   
             last_time=Time.time;
             // tiempo de ejecución
+
             // Acción controladora
 
                 // en [m/s]
@@ -173,36 +200,65 @@ public class CarController : MonoBehaviour
                 x1n=x1 +0.197844221975159f*x2+0.005038243521050f*e;
                 x2n=0.978442219751588f*x2+0.050382435210502f*e;
 
-                u=0.051586824663966f*x1+0.315114588675131f*x2+ 0.319823269597134f*e;
+                u=0.051586824663966f*x1+0.315114588675131f*x2+ 0.319823269597134f*e + uN;
                 
-                
+                Debug.Log("u:"+u);
 
                 // saturación
-                if (u>1-uN)
+                if (u>1)
                 {
-                u=1-uN;
+                u=1;
                 }
-                else if(u<-uN)
+                else if(u<0)
                 {
-                u=-uN;
+                u=0;
                 }              
 
                 // Cálculo de la velocidad sobre el modelo linealizado
-                vn1=(Ts*lA+1)*vn+Ts*lB*u-Ts*B_g*auxTheta*Mathf.PI/180f;
-                
-                carVelocity=lC*vn+lD*u+vN;
 
-                Debug.Log("t= "+(Time.time-start_time)+"[s] "+" v: "+carVelocity +" [m/s] "+"u: "+ (u+uN)); 
+                vn1= vn+ Ts*(ALFHA_4*u*TM*(1-BETA*Mathf.Pow(ALFHA_4*vn/WM-1,2))-M*V_g*CR-RHO*CD*A*(vn*vn)/2-M*V_g*Mathf.Sin(auxTheta*Mathf.PI/180f))/M;
+
+                carVelocity=vn;
+
+                // Asignaciones de texto
+                
+                Tiempo.text="t: "+(Time.time-start_time).ToString("F3")+" [s]";
+                
+                Velocity.text="u: "+u.ToString("F3")
+                                +"\n"+"vr: "+(vr*3.6f).ToString("F3") +" [km/h]";
+                
+                VelU.text="v: "+ (carVelocity*3.6f).ToString("F3") +" [km/h]";
+                
+                if(u==0) 
+                {
+                    arranque.volume=0.5f;
+                }
+                else {
+                    throttle.volume=u;
+                    arranque.volume=0;
+                }
+                // Imprimir por cosola
+                Debug.Log("t= "+(Time.time-start_time)+"[s] "+" v: "+carVelocity +" [m/s] "+"u: "+ u); 
             // Termina acción controladora. vn está en [m/s] y la posición está en km/h
 
             this.transform.position=new Vector3(Mathf.Cos(auxTheta*Mathf.PI/180)*(108*carVelocity/125-12)
-            ,Mathf.Sin(auxTheta*Mathf.PI/180)*(108*carVelocity/125-12),transform.position.z);
-            // Se fijan los límites de movimiento
-            float newX=Mathf.Clamp(transform.position.x,MINIMO_X+PADDING,MAXIMO_X-PADDING);
-            float newY=Mathf.Clamp(transform.position.y,MINIMO_Y+PADDING,MAXIMO_Y-PADDING);
-            // transform.position.z estrae la posición que tengo en transform
-            this.transform.position=new Vector3(newX,newY,transform.position.z);
+            ,Mathf.Sin(auxTheta*Mathf.PI/180)*(108*carVelocity/125-12),this.transform.position.z);
             
+            // Se fijan los límites de movimiento
+            float newX=Mathf.Clamp(this.transform.position.x,MINIMO_X+PADDING,MAXIMO_X-PADDING);
+            float newY=Mathf.Clamp(this.transform.position.y,MINIMO_Y+PADDING,MAXIMO_Y-PADDING);
+            // transform.position.z estrae la posición que tengo en transform
+            
+            this.transform.position=new Vector3(newX,newY,this.transform.position.z);
+            
+            if(Time.time-start_time>=tiempoStep&&doStep)
+            {
+                vr+=step/3.6f;
+                carroReferencia.transform.position=new Vector3(Mathf.Cos(auxTheta*Mathf.PI/180f)*(6f*3.6f*vr/25f-12f)
+                ,Mathf.Sin(auxTheta*Mathf.PI/180f)*(6*3.6f*vr/25f-12f),carroReferencia.transform.position.z);
+                doStep=false;
+            }
+
 
             // Se establece el ángulo de rotación
             if((Time.time-start_time>=tiempoComienzoPendiente)&&rotate)
@@ -220,16 +276,17 @@ public class CarController : MonoBehaviour
                 rotate=false;
             }
 
-            //actualización de variables
-
-
+            //actualización de variables de tiempo discreto
             vn=vn1;
             x1=x1n;
             x2=x2n;
 
         
         
-        }   
+        }
+        
+           
     }
+    
     
 }

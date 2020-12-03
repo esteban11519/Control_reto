@@ -151,7 +151,13 @@ Intentándolo...
 ```
 
 
-Referencias
+## Datos
+
+Para los controladores utilicé los tipos double [link](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/floating-point-numeric-types)
+ 
+
+
+## Referencias
 
 Imágen tomada de: https://es.wikipedia.org/wiki/Regla_graduada#/media/Archivo:Regla_H.svg
 

@@ -158,7 +158,7 @@ public class CarController : MonoBehaviour
         double De;
         double eant=0;
         
-
+        
     void Awake(){
         //Funciones para traer los valores de la interfaz
         _Mainmenu=FindObjectOfType<Mainmenu>();
@@ -168,6 +168,7 @@ public class CarController : MonoBehaviour
     // En esta parte se inicializan los datos.
     void Start()
     {   
+        
         // Se toman los valores de las escenas Menu2
         aux_vr= _Mainmenu.getSpeed() ;
         M=_Mainmenu.getMass();
@@ -179,7 +180,7 @@ public class CarController : MonoBehaviour
         ki=_Mainmenu.getKi();
         kd=_Mainmenu.getKd();
         N=_Mainmenu.getN();
-        print("aux_vr: "+aux_vr+" M: "+ M+" theta: "+theta+" step: "+step+" kp: "+kp+" ki: "+ ki+" kd: "+kd+" N: "+N);
+        //print("aux_vr: "+aux_vr+" M: "+ M+" theta: "+theta+" step: "+step+" kp: "+kp+" ki: "+ ki+" kd: "+kd+" N: "+N);
         // Fin de toma de datos
 
 
@@ -279,7 +280,7 @@ public class CarController : MonoBehaviour
                     De=kd*(e-eant)/Ts;
                     u=P+I+De;
                 }
-                 Debug.Log("u:"+u);
+                // Debug.Log("u:"+u);
 
                 // saturación
                 if (u>1)
@@ -317,7 +318,7 @@ public class CarController : MonoBehaviour
                     arranque.volume=0;
                 }
              // Imprimir por consola
-                Debug.Log("t= "+(Time.time-start_time)+"[s] "+" v: "+carVelocity +" [m/s] "+"u: "+ u); 
+             //   Debug.Log("t= "+(Time.time-start_time)+"[s] "+" v: "+carVelocity +" [m/s] "+"u: "+ u); 
             // Termina acción controladora. vn está en [m/s] y la posición está en km/h
 
             this.transform.position=new Vector3(Mathf.Cos(auxTheta*Mathf.PI/180)*(108*carVelocity/125-12)

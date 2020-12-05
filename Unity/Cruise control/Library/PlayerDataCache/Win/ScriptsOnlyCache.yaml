@@ -875,4 +875,4 @@ ScriptsOnlyBuild:
   scenePathNames:
   - Assets/Scenes/Menu2.unity
   - Assets/Scenes/SampleScene.unity
-  playerPath: C:/Users/Esteban/Downloads/Cruise control/Juego/Cruise control.exe
+  playerPath: D:/UNAL/semester7/Control/Reto/Control_reto/Unity/Juego/Cruise control.exe

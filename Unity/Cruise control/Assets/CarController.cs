@@ -278,7 +278,7 @@ public class CarController : MonoBehaviour
                     P=kp*e;
                     I=Iant+ki*Ts*e;
                     De=kd*(e-eant)/Ts;
-                    u=P+I+De;
+                    u=P+I+De+uN;
                 }
                 // Debug.Log("u:"+u);
 
@@ -312,6 +312,7 @@ public class CarController : MonoBehaviour
                 if(u==0) 
                 {
                     arranque.volume=0.5f;
+                    throttle.volume=0;
                 }
                 else {
                     throttle.volume=(float)u;
@@ -356,20 +357,17 @@ public class CarController : MonoBehaviour
 
           
 
-            //actualización de variables
-
+            //actualización de variables de estado
+            
+            vn=vn1;
             if(linealizado_bilineal){
-                vn=vn1;
                 x1=x1n;
                 x2=x2n;
             }else{
-                vn=vn1;
                 Iant=I;
                 eant=e;
             }
             
-        
-        
         }   
     }
 
